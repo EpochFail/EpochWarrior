@@ -1,7 +1,7 @@
 class Player
   def play_turn(warrior)
     @warrior = warrior
-    walk!
+    feel.empty? ? walk! : attack!
   end
 
   # Get rid of the warrior.everything
