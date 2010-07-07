@@ -1,7 +1,9 @@
 class Player
+
   def play_turn(warrior)
     @warrior = warrior
     tick
+    @state[:last_health] = health
   end
 
   # Get rid of the warrior.everything
@@ -9,15 +11,34 @@ class Player
     @warrior.send(sym, *args, &block)
   end
 
-  def tick
-    if feel.empty? and health > 10
-      walk!
-    elsif feel.empty? and health < 10
-      rest!
-    elsif !feel.empty?
-      attack!
-    else
-      walk!
-    end
+  def initialize
+    @state = {
+      :last_health => 20
+    }
+    @config = {
+      :minimum_health => 9,
+      :maximum_health => 20
+    }
   end
+
+  def tick
+    walk! :backward and return if under_attack? and low_health? 
+    rest! and return if not fully_healed? and not under_attack? and feel.empty?
+    attack! and return if not feel.empty?
+    walk! and return
+  end
+
+  def under_attack?
+    health < @state[:last_health]
+  end
+
+  def low_health?
+    health <= @config[:minimum_health]
+  end
+
+  def fully_healed?
+    health >= @config[:maximum_health]
+  end
+
 end
+
