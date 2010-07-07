@@ -24,7 +24,8 @@ class Player
   def tick
     walk! :backward and return if under_attack? and low_health? 
     rest! and return if not fully_healed? and not under_attack? and feel.empty?
-    attack! and return if not feel.empty?
+	rescue! and return if feel.captive?
+    attack! and return if not feel.empty? and not feel.captive?
     walk! and return
   end
 
