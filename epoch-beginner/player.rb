@@ -19,17 +19,16 @@ class Player
       :minimum_health => 9,
       :maximum_health => 20
     }
-	@direction = :backward
   end
 
   def tick
 	
-    walk! backwards and return if under_attack? and low_health? 
-    rest! and return if not fully_healed? and not under_attack? and feel(@direction).empty?
-	rescue! @direction and return if feel(@direction).captive?
-	walk! reverse_direction and return if feel(@direction).wall?
-    attack! @direction and return if not feel(@direction).empty? and not feel(@direction).captive?
-    walk! @direction and return
+    walk! :backward and return if under_attack? and low_health? 
+    rest! and return if not fully_healed? and not under_attack? and feel.empty?
+	rescue!  and return if feel.captive?
+	pivot!  and return if feel.wall?
+    attack!  and return if not feel.empty? and not feel.captive?
+    walk!  and return
   end
 
   def under_attack?
@@ -42,12 +41,6 @@ class Player
 
   def fully_healed?
     health >= @config[:maximum_health]
-  end
-  def reverse_direction
-    @direction = (@direction == :forward) ? :backward : :forward
-  end
-  def backwards
-	(@direction == :forward) ? :backward : :forward
   end
 
 end
