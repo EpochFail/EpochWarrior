@@ -22,9 +22,9 @@ class Player
   end
 
   def tick
-	
-    walk! :backward and return if under_attack? and low_health? 
-    rest! and return if not fully_healed? and not under_attack? and feel.empty?
+    walk! :backward and return if under_attack? and low_health?
+    rest! and return if not fully_healed? and not under_attack? and feel.empty?	
+	shoot! and return if should_shoot?
 	rescue!  and return if feel.captive?
 	pivot!  and return if feel.wall?
     attack!  and return if not feel.empty? and not feel.captive?
@@ -41,6 +41,15 @@ class Player
 
   def fully_healed?
     health >= @config[:maximum_health]
+  end
+  
+  def should_shoot?
+	isSafe = -1
+	
+	look.each{|x| if isSafe == -1 and x.enemy? then isSafe = 1 elsif isSafe == -1 and x.captive? then isSafe = 0 end}
+
+	
+	return isSafe == 1 ? true : false
   end
 
 end
