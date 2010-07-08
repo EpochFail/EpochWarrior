@@ -3,7 +3,7 @@ class Player
   def play_turn(warrior)
     @warrior = warrior
     tick
-    #@state[:last_health] = health
+    @state[:last_health] = health
   end
 
   # Get rid of the warrior.everything
@@ -20,7 +20,7 @@ class Player
       :minimum_health => 9,
       :maximum_health => 20
     }
-    @directions = [:forward, :backward]
+    @directions = [:forward, :backward, :left, :right]
     @target_prioritization = ['C','w', 'a', 'S', 's']
     @enemy_range = {'w'=>2,'a'=>2,'S'=>0,'s'=>0}
   end
@@ -29,11 +29,11 @@ class Player
     assess_the_situation
     
     #shoot! direction_to_target and return if enemy_in_range? and should_shoot? direction_to_target
-    #retreat! and return if under_attack? and low_health?
-    #rest! and return if not fully_healed? and not under_attack? and feel.empty? and not nothing_but_stairs?
+    retreat! and return if under_attack? and low_health?
+    rest! and return if not fully_healed? and not under_attack? and feel(direction_to_target).empty? and not nothing_but_stairs?
     #rescue! direction_to_target and return if feel.captive?
     #pivot! and return if nothing_but_wall? or direction_to_target == :backward
-    #attack! and return if not feel.empty? and not feel.captive?
+    attack! direction_to_target and return if not feel(direction_to_target).empty? and not feel(direction_to_target).captive?
     walk! direction_to_target and return
   end
   
@@ -91,7 +91,7 @@ class Player
     look(direction).reject(&:empty?).first.enemy? rescue false
   end
   
-  def look(direction)
+  def look(direction=:forward)
     [feel(direction)]
   end
 end
