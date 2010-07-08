@@ -10,7 +10,7 @@ class Player
   def method_missing(sym, *args, &block)
     @warrior.send(sym, *args, &block)
   end
-
+	
   def initialize
     @state = {
       :last_health => 20
@@ -19,9 +19,12 @@ class Player
       :minimum_health => 9,
       :maximum_health => 20
     }
+	@shoot_direction = :forward
   end
 
   def tick
+  
+	shoot! @shoot_direction and return if should_shoot_range?
     walk! :backward and return if under_attack? and low_health?
     rest! and return if not fully_healed? and not under_attack? and feel.empty?	
 	shoot! and return if should_shoot?
@@ -43,13 +46,38 @@ class Player
     health >= @config[:maximum_health]
   end
   
-  def should_shoot?
-	isSafe = -1
+  def shoot_direction
 	
-	look.each{|x| if isSafe == -1 and x.enemy? then isSafe = 1 elsif isSafe == -1 and x.captive? then isSafe = 0 end}
+  end
+  
+  
 
-	
-	return isSafe == 1 ? true : false
+  
+   def long_range_enemy?(direction)
+        isSafe = -1	
+		look(direction).each{|x| if isSafe == -1 and (x.character == "a" or x.character == "w") then isSafe = 1 
+						elsif isSafe = -1 and x.enemy? then isSafe = 0 
+						elsif isSafe = -1 and x.captive? then isSafe = 0 end}
+		#print isSafe, "/",direction,"/"
+		if isSafe == 1 then @shoot_direction =  direction	
+			return true if isSafe == 1 end
+			false
+  end
+  
+  def should_shoot?
+  look.reject(&:empty?).first.enemy? rescue false
+  end
+
+  def should_shoot_range?
+    each_direction do |dir|
+      return true if long_range_enemy?(dir)
+    end
+    false
+  end
+   def each_direction(&block)
+    [:forward, :backward, :left, :right].each do |dir|
+      yield(dir)
+    end
   end
 
 end
