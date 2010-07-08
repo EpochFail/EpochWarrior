@@ -10,28 +10,35 @@ class Player
   def method_missing(sym, *args, &block)
     @warrior.send(sym, *args, &block)
   end
-	
+
   def initialize
     @state = {
-      :last_health => 20
+      :last_health => 20,
+      :targets => []
     }
     @config = {
       :minimum_health => 9,
       :maximum_health => 20
     }
-	@shoot_direction = :forward
+    @directions = [:forward, :backward]
+    @target_prioritization = ['C','w', 'a', 'S', 's']
+    @enemy_range = {'w'=>2,'a'=>2,'S'=>0,'s'=>0}
   end
 
   def tick
+    assess_the_situation
+    
+    shoot! direction_to_target and return if enemy_in_range? and should_shoot? direction_to_target
+    retreat! and return if under_attack? and low_health?
+    rest! and return if not fully_healed? and not under_attack? and feel.empty? and not nothing_but_stairs?
+    rescue! direction_to_target and return if feel.captive?
+    pivot! and return if nothing_but_wall? or direction_to_target == :backward
+    attack! and return if not feel.empty? and not feel.captive?
+    walk! direction_to_target and return
+  end
   
-	shoot! @shoot_direction and return if should_shoot_range?
-    walk! :backward and return if under_attack? and low_health?
-    rest! and return if not fully_healed? and not under_attack? and feel.empty?	
-	shoot! and return if should_shoot?
-	rescue!  and return if feel.captive?
-	pivot!  and return if feel.wall?
-    attack!  and return if not feel.empty? and not feel.captive?
-    walk!  and return
+  def retreat!
+    walk! :backward
   end
 
   def under_attack?
@@ -46,39 +53,41 @@ class Player
     health >= @config[:maximum_health]
   end
   
-  def shoot_direction
-	
+  def assess_the_situation
+    @state[:targets] = @directions.map { |d| look(d).reject { |s| s.empty? or s.wall?}
+                         .map { |t| {:direction => d, :space => t} } }
+                         .flatten
   end
   
-  
-
-  
-   def long_range_enemy?(direction)
-        isSafe = -1	
-		look(direction).each{|x| if isSafe == -1 and (x.character == "a" or x.character == "w") then isSafe = 1 
-						elsif isSafe = -1 and x.enemy? then isSafe = 0 
-						elsif isSafe = -1 and x.captive? then isSafe = 0 end}
-		#print isSafe, "/",direction,"/"
-		if isSafe == 1 then @shoot_direction =  direction	
-			return true if isSafe == 1 end
-			false
+  def enemy_in_range?
+    not @state[:targets].select {|t| t[:space].enemy?}.empty?
   end
   
-  def should_shoot?
-  look.reject(&:empty?).first.enemy? rescue false
-  end
-
-  def should_shoot_range?
-    each_direction do |dir|
-      return true if long_range_enemy?(dir)
+  def enemy_can_attack?
+    spaces = look(direction_to_target)
+    spaces.map! do |s|
+      s.enemy? ? @enemy_range[s.character] : -1
     end
-    false
+    spaces.select {|s| s >= spaces.index(s)}.size > 0
   end
-   def each_direction(&block)
-    [:forward, :backward, :left, :right].each do |dir|
-      yield(dir)
-    end
+  
+  def direction_to_target
+    target = @state[:targets].sort { |a,b| @target_prioritization.index(a[:space].character) <=> @target_prioritization.index(b[:space].character) }.first     
+    target[:direction] rescue :forward
   end
-
+  
+  def nothing_but_wall?
+    return false if look.select(&:stairs?).size == 1
+    return false if look.reject(&:empty?).size == 0
+    return true if look.reject(&:empty?).reject(&:wall?).size == 0
+    return false
+  end
+  
+  def nothing_but_stairs?
+    look.select(&:stairs?).size == 1 and look.reject(&:empty?).reject(&:wall?).size == 0
+  end
+  
+  def should_shoot?(direction)
+    look(direction).reject(&:empty?).first.enemy? rescue false
+  end
 end
-
