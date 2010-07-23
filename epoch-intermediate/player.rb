@@ -21,17 +21,19 @@ class Player
       :maximum_health => 20
     }
     @directions = [:forward, :backward, :left, :right]
-    @target_prioritization = ['C','w', 'a', 'S', 's']
+    @target_prioritization = ['w', 'a', 'S', 's', 'C']
     @enemy_range = {'w'=>2,'a'=>2,'S'=>0,'s'=>0}
   end
 
   def tick
     assess_the_situation
-    
+    bind! direction_to_bind and return if should_bind?
+    rest! and return if low_health? and all_enemies_bound?
+    attack! direction_to_target and return if all_enemies_bound?
     #shoot! direction_to_target and return if enemy_in_range? and should_shoot? direction_to_target
     retreat! and return if under_attack? and low_health?
-    rest! and return if not fully_healed? and not under_attack? and feel(direction_to_target).empty? and not nothing_but_stairs?
-    #rescue! direction_to_target and return if feel.captive?
+    rest! and return if under_attack? and not under_attack? and feel(direction_to_target).empty? and not nothing_but_stairs?
+    rescue! direction_to_target and return if feel(direction_to_target).captive?
     #pivot! and return if nothing_but_wall? or direction_to_target == :backward
     attack! direction_to_target and return if not feel(direction_to_target).empty? and not feel(direction_to_target).captive?
     walk! direction_to_target and return
@@ -93,5 +95,22 @@ class Player
   
   def look(direction=:forward)
     [feel(direction)]
+  end
+  
+  def should_bind?
+    @directions.any? { |d| feel(d).enemy? && !feel(d).captive? }
+  end
+  
+  def direction_to_bind
+    @directions.find { |d| feel(d).enemy? && !feel(d).captive? }.tap { |x| puts "binding in #{x}" }
+  end
+  
+  def should_attack_bound_enemy?
+    @directions.map { |d| feel(d) }.select(&:enemy?).all?(&:captive?)
+  end
+  
+  def all_enemies_bound?
+    enemies = @directions.map { |d| feel(d) }.select { |s| !s.empty? && s.to_s.downcase != "captive" }
+    !enemies.empty? && enemies.all?(&:captive?)
   end
 end
