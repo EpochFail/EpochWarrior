@@ -32,7 +32,7 @@ class Player
     attack! direction_to_target and return if all_enemies_bound?
     #shoot! direction_to_target and return if enemy_in_range? and should_shoot? direction_to_target
     retreat! and return if under_attack? and low_health?
-    rest! and return if under_attack? and not under_attack? and feel(direction_to_target).empty? and not nothing_but_stairs?
+    rest! and return if low_health? and not under_attack? and feel(direction_to_target).empty? and not nothing_but_stairs?
     rescue! direction_to_target and return if feel(direction_to_target).captive?
     #pivot! and return if nothing_but_wall? or direction_to_target == :backward
     attack! direction_to_target and return if not feel(direction_to_target).empty? and not feel(direction_to_target).captive?
