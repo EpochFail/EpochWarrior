@@ -3,5 +3,6 @@ require 'rubygems'
 require 'ruby_warrior'
 
 profile = RubyWarrior::Profile.load('./.profile')
-profile.tower_path = Gem.path.first+"/gems/rubywarrior-0.1.1/towers/intermediate"
+spec =Gem::GemPathSearcher.new.find("ruby_warrior")
+profile.tower_path = spec.full_gem_path + "/towers/intermediate"
 profile.save
