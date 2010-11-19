@@ -2,13 +2,16 @@ class Player
 
   def play_turn(warrior)
     @warrior = warrior
-    tick
+    catch(:end_turn) { tick }
     @state[:last_health] = health
   end
 
   # Get rid of the warrior.everything
   def method_missing(sym, *args, &block)
-    @warrior.send(sym, *args, &block)
+    ret = @warrior.send(sym, *args, &block)
+    # if method ends in !, then we want to end our turn 
+    throw :end_turn if sym =~ /!$/
+    ret
   end
 
   def initialize
@@ -27,16 +30,16 @@ class Player
 
   def tick
     assess_the_situation
-    bind! direction_to_bind and return if should_bind?
-    rest! and return if low_health? and all_enemies_bound?
-    attack! direction_to_target and return if all_enemies_bound?
-    #shoot! direction_to_target and return if enemy_in_range? and should_shoot? direction_to_target
-    retreat! and return if under_attack? and low_health?
-    rest! and return if low_health? and not under_attack? and feel(direction_to_target).empty? and not nothing_but_stairs?
-    rescue! direction_to_target and return if feel(direction_to_target).captive?
-    #pivot! and return if nothing_but_wall? or direction_to_target == :backward
-    attack! direction_to_target and return if not feel(direction_to_target).empty? and not feel(direction_to_target).captive?
-    walk! direction_to_target and return
+    bind! direction_to_bind if should_bind?
+    rest! if low_health? and all_enemies_bound?
+    attack! direction_to_target if all_enemies_bound?
+    #shoot! direction_to_target if enemy_in_range? and should_shoot? direction_to_target
+    retreat! if under_attack? and low_health?
+    rest! if low_health? and not under_attack? and feel(direction_to_target).empty? and not nothing_but_stairs?
+    rescue! direction_to_target if feel(direction_to_target).captive?
+    #pivot! if nothing_but_wall? or direction_to_target == :backward
+    attack! direction_to_target if not feel(direction_to_target).empty? and not feel(direction_to_target).captive?
+    walk! direction_to_target
   end
   
   def retreat!
