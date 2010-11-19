@@ -1,36 +1,20 @@
 class Test
-  
-  class << self
-    attr_reader :actions
-  end
-  
-  class << @actions = {}
-    
-    alias_method "old_[]", "[]"
-    
-    def [](sym, *params)
-      send("old_[]", sym).call(*params)
+  def self.and_return(sym, &block)
+    define_method sym do |*args|
+      block.call(*args)
+      # end turn immediately after executing the block
+      throw :end_turn
     end
   end
   
-  def self.and_return(sym, &block)
-    @actions[sym] = Proc.new { |*params| block.call(*params); return }
-  end
-  
-  def doit
-    self.class.actions
-  end
-  
   def tick
-    doit[:shoot, 42]
+    shoot 42
     puts "did it" # the goal is to get this not to print, since the previous call should force a return
   end
   
   def play_turn
-    begin
+    catch :end_turn do
       tick
-    rescue LocalJumpError
-      # ignore
     end
   end
 
